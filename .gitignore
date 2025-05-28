@@ -1,0 +1,33 @@
+﻿# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Build folders
+dist/
+build/
+out/
+.next/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Editor/IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# System
+.DS_Store
+Thumbs.db
