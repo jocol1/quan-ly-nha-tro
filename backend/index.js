@@ -6,7 +6,6 @@ const tenantRoutes = require('./routes/tenant');
 const authRoutes = require('./routes/auth');
 const billRoutes = require('./routes/bill');
 
-
 const app = express();
 
 app.use(cors());
@@ -16,9 +15,12 @@ app.use('/api/tenants', tenantRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/bill', billRoutes);
 
+// Sử dụng biến môi trường để lấy chuỗi kết nối
+const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://<username>:<password>@<cluster>.mongodb.net/quanlynhatro?retryWrites=true&w=majority';
 
-mongoose.connect('mongodb://locly:123@localhost:27017/quanlynhatro?authSource=admin')
-  .then(() => console.log('Connected to MongoDB'))
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB Atlas'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-app.listen(5000, () => console.log('Server running on port 5000'));
+const port = process.env.PORT || 5000;
+app.listen(port, () => console.log(`Server running on port ${port}`));
