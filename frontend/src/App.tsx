@@ -7,6 +7,7 @@ import Tenants from './components/Tenants';
 import DienNuoc from './components/diennuoc'; // Cập nhật import với tên mới
 import ProtectedRoute from './components/ProtectedRoute';
 import AlertUnpaid from './components/AlertUnpaid';
+import logo from './UTE.jpg'; // Thêm dòng này ở đầu file
 
 // Component nhỏ để xử lý đăng xuất
 const Logout = () => {
@@ -30,8 +31,13 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-dark-blue text-white p-4">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold">Logo</h2>
+        <div className="mb-8 flex items-center">
+          <img 
+            src={logo}
+            alt="Logo" 
+            className="h-8 w-8 mr-2 object-contain"
+          />
+          <h2 className="text-xl font-bold">NHÀ TRỌ THỦ ĐỨC</h2>
         </div>
         <nav>
           <NavLink

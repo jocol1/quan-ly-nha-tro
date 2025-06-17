@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { PencilIcon, EnvelopeIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import { EnvelopeIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { db } from '../firebase';
-import { collection, onSnapshot, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, QuerySnapshot, DocumentData, updateDoc, getDocs } from 'firebase/firestore';
 import emailjs from 'emailjs-com';
 import * as XLSX from 'xlsx';
 
@@ -48,19 +47,11 @@ const DienNuoc = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [electricityBills, setElectricityBills] = useState<ElectricityBill[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editData, setEditData] = useState({
-    roomId: '',
-    tenantCitizenId: '',
-    oldMeterReading: 0,
-    newMeterReading: 0,
-    totalCost: 0,
-  });
 
   const fetchRooms = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get<Room[]>('http://localhost:5000/api/rooms');
+      const { data } = await axios.get<Room[]>('https://nhatro-backend.onrender.com/api/rooms');
       const occupiedRooms = data
         .filter(room => room.status === 'occupied')
         .map(room => ({
@@ -72,7 +63,12 @@ const DienNuoc = () => {
             citizenId: room.tenant.citizenId || '',
             isPaid: room.tenant.isPaid ?? false
           } : undefined
-        }));
+        }))
+        .sort((a, b) => {
+          const roomNumA = parseInt(a.roomNumber);
+          const roomNumB = parseInt(b.roomNumber);
+          return roomNumA - roomNumB;
+        });
       setRooms(occupiedRooms);
     } catch (err) {
       console.error('Lỗi tải dữ liệu phòng:', err);
@@ -126,41 +122,6 @@ const DienNuoc = () => {
     return electricityCost + calculateWaterCost(room) + (room.price || 0);
   }, [electricityBills, calculateElectricityCost, calculateWaterCost]);
 
-  const handleEditModal = useCallback((room: Room) => {
-    const electricityBill = electricityBills.find(b => b.roomNumber === room.roomNumber);
-    setEditData({
-      roomId: room._id,
-      tenantCitizenId: room.tenant?.citizenId || '',
-      oldMeterReading: electricityBill?.oldMeterReading || 0,
-      newMeterReading: electricityBill?.newMeterReading || 0,
-      totalCost: room.tenant?.totalCost || calculateTotalCost(room),
-    });
-    setIsEditModalOpen(true);
-  }, [electricityBills, calculateTotalCost]);
-
-  const handleUpdate = useCallback(async () => {
-    try {
-      if (editData.tenantCitizenId) {
-        await axios.put(
-          `http://localhost:5000/api/tenants/citizenId/${editData.tenantCitizenId}`,
-          {
-            oldMeterReading: editData.oldMeterReading,
-            newMeterReading: editData.newMeterReading,
-            totalCost: editData.totalCost,
-          }
-        );
-        await fetchRooms();
-      }
-      setIsEditModalOpen(false);
-      alert('Cập nhật thành công!');
-    } catch (err) {
-      console.error('Lỗi cập nhật:', err);
-      alert(isAxiosError(err) 
-        ? err.response?.data?.message || 'Cập nhật thất bại' 
-        : 'Lỗi không xác định');
-    }
-  }, [editData, fetchRooms]);
-
   const handleConfirmPayment = useCallback(async (citizenId: string) => {
     if (!citizenId) {
       alert('Không tìm thấy CCCD người thuê!');
@@ -176,7 +137,7 @@ const DienNuoc = () => {
           : room
       ));
       
-      await axios.put(`http://localhost:5000/api/tenants/citizenId/${citizenId}`, { isPaid: true });
+      await axios.put(`https://nhatro-backend.onrender.com/api/tenants/citizenId/${citizenId}`, { isPaid: true });
       alert('Xác nhận thành công!');
     } catch (err) {
       console.error('Lỗi xác nhận thanh toán:', err);
@@ -185,6 +146,66 @@ const DienNuoc = () => {
         : 'Lỗi không xác định');
     }
   }, []);
+
+  const resetForNewMonth = useCallback(async () => {
+    if (!window.confirm('Bạn có chắc muốn reset dữ liệu cho tháng mới?')) return;
+
+    try {
+      setLoading(true);
+
+      // Reset dữ liệu trên Firestore
+      const billsRef = collection(db, '123');
+      const querySnapshot = await getDocs(billsRef);
+      const updates = querySnapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        await updateDoc(doc.ref, {
+          oldMeterReading: data.newMeterReading || 0,
+        });
+      });
+      await Promise.all(updates);
+
+      // Reset trạng thái thanh toán và totalCost trên server
+      await Promise.all(rooms.map(async (room) => {
+        if (room.tenant?.citizenId) {
+          const bill = electricityBills.find(b => b.roomNumber === room.roomNumber);
+          await axios.put(`https://nhatro-backend.onrender.com/api/tenants/citizenId/${room.tenant.citizenId}`, {
+            isPaid: false,
+            oldMeterReading: bill?.newMeterReading || 0,
+            totalCost: 0,
+          });
+        }
+      }));
+
+      // Cập nhật state
+      setRooms(prevRooms => prevRooms.map(room => {
+        const bill = electricityBills.find(b => b.roomNumber === room.roomNumber);
+        return {
+          ...room,
+          tenant: room.tenant ? { 
+            ...room.tenant, 
+            isPaid: false, 
+            oldMeterReading: bill?.newMeterReading || 0, 
+            totalCost: 0 
+          } : undefined,
+        };
+      }));
+      setElectricityBills(prevBills => prevBills.map(bill => ({
+        ...bill,
+        oldMeterReading: bill.newMeterReading || 0,
+      })));
+
+      alert('Reset dữ liệu tháng mới thành công!');
+    } catch (err) {
+      console.error('Lỗi reset dữ liệu:', err);
+      alert(isAxiosError(err) 
+        ? err.response?.data?.message || 'Reset thất bại!' 
+        : 'Lỗi không xác định');
+    } finally {
+      setLoading(false);
+    }
+  }, [rooms, electricityBills]);
+
+  const allPaid = rooms.every(room => room.tenant?.isPaid);
 
   const renderActionCell = useCallback((room: Room) => {
     if (room.tenant?.isPaid) {
@@ -195,7 +216,7 @@ const DienNuoc = () => {
       );
     }
     return (
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center justify-center">
         <button
           onClick={() =>
             room.tenant?.citizenId
@@ -295,7 +316,6 @@ const DienNuoc = () => {
   }, [rooms, electricityBills, calculateElectricityCost, calculateWaterCost]);
 
   useEffect(() => {
-    // Sau khi rooms và electricityBills đã load xong
     if (!loading && rooms.length > 0) {
       const totalElectricity = rooms.reduce((sum, room) => {
         const bill = electricityBills.find(b => b.roomNumber === room.roomNumber);
@@ -325,6 +345,7 @@ const DienNuoc = () => {
           <button
             onClick={sendBillEmails}
             className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+            disabled={loading}
           >
             <EnvelopeIcon className="h-5 w-5" />
             <span>Gửi Email Hóa Đơn</span>
@@ -332,9 +353,19 @@ const DienNuoc = () => {
           <button
             onClick={exportToExcel}
             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+            disabled={loading}
           >
             Xuất Excel
           </button>
+          {allPaid && (
+            <button
+              onClick={resetForNewMonth}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors"
+              disabled={loading}
+            >
+              Reset Tháng Mới
+            </button>
+          )}
         </div>
       </div>
 
@@ -372,12 +403,10 @@ const DienNuoc = () => {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">{calculateWaterCost(room).toLocaleString('vi-VN')} VNĐ</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">{(room.price || 0).toLocaleString('vi-VN')} VNĐ</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-medium">
-                      {(electricityCost + calculateWaterCost(room) + (room.price || 0)).toLocaleString('vi-VN')} VNĐ
+                      {totalCost.toLocaleString('vi-VN')} VNĐ
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                      <div className="flex justify-center">
-                        {renderActionCell(room)}
-                      </div>
+                      {renderActionCell(room)}
                     </td>
                   </tr>
                 );
@@ -388,81 +417,6 @@ const DienNuoc = () => {
       ) : (
         <div className="bg-white p-6 rounded-lg shadow text-center">
           <p className="text-gray-600">Không có phòng nào để hiển thị</p>
-        </div>
-      )}
-
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            className="bg-white rounded-lg shadow-xl w-full max-w-md"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Cập nhật thông tin điện nước</h3>
-                <button 
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện cũ</label>
-                  <input
-                    type="number"
-                    value={editData.oldMeterReading}
-                    onChange={(e) => setEditData({...editData, oldMeterReading: Number(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện mới</label>
-                  <input
-                    type="number"
-                    value={editData.newMeterReading}
-                    onChange={(e) => setEditData({...editData, newMeterReading: Number(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tổng số tiền (VNĐ)</label>
-                  <input
-                    type="number"
-                    value={editData.totalCost}
-                    onChange={(e) => setEditData({...editData, totalCost: Number(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Có thể điều chỉnh tổng số tiền nếu cần</p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="button"
-                  onClick={handleUpdate}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Cập nhật
-                </button>
-              </div>
-            </div>
-          </motion.div>
         </div>
       )}
     </div>

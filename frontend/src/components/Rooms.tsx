@@ -67,17 +67,24 @@ const Rooms = () => {
   const fetchRooms = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/rooms', {
+      const response = await axios.get('https://nhatro-backend.onrender.com/api/rooms', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fetchedRooms: Room[] = response.data;
-      const roomsWithDefaults = fetchedRooms.map((room) => ({
-        ...room,
-        price: room.price || 3000000,
-        floor: room.floor || 1,
-        bathrooms: room.bathrooms || 1,
-        showerRooms: room.showerRooms || 1,
-      }));
+      const roomsWithDefaults = fetchedRooms
+        .map((room) => ({
+          ...room,
+          price: room.price || 3000000,
+          floor: room.floor || 1,
+          bathrooms: room.bathrooms || 1,
+          showerRooms: room.showerRooms || 1,
+        }))
+        .sort((a, b) => {
+          // Sắp xếp tăng dần theo số phòng (chuyển về số để so sánh)
+          const numA = parseInt(a.roomNumber, 10);
+          const numB = parseInt(b.roomNumber, 10);
+          return numA - numB;
+        });
       setRooms(roomsWithDefaults);
       applyFilters(roomsWithDefaults);
     } catch (err) {
@@ -128,7 +135,7 @@ const Rooms = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:5000/api/rooms',
+        'https://nhatro-backend.onrender.com/api/rooms',
         newRoom,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -167,7 +174,7 @@ const Rooms = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/rooms/${editRoom._id}`,
+        `https://nhatro-backend.onrender.com/api/rooms/${editRoom._id}`,
         {
           roomNumber: editRoom.roomNumber,
           floor: editRoom.floor,
@@ -195,7 +202,7 @@ const Rooms = () => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa phòng ${room.roomNumber}?`)) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/rooms/${room._id}`, {
+      await axios.delete(`https://nhatro-backend.onrender.com/api/rooms/${room._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await fetchRooms();
@@ -245,7 +252,7 @@ const Rooms = () => {
       }
 
       console.log('Selected Room ID:', selectedRoom._id);
-      const roomResponse = await axios.get(`http://localhost:5000/api/rooms/${selectedRoom._id}`, {
+      const roomResponse = await axios.get(`https://nhatro-backend.onrender.com/api/rooms/${selectedRoom._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const roomData: Room = roomResponse.data;
@@ -264,7 +271,7 @@ const Rooms = () => {
       });
 
       await axios.post(
-        'http://localhost:5000/api/tenants',
+        'https://nhatro-backend.onrender.com/api/tenants',
         {
           name: newTenant.name,
           citizenId: newTenant.citizenId,

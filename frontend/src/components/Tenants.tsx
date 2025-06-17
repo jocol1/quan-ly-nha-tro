@@ -45,14 +45,14 @@ const Tenants = () => {
   const fetchTenants = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/tenants', {
+      const response = await axios.get('https://nhatro-backend.onrender.com/api/tenants', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const tenantsData: Tenant[] = response.data;
       setTenants(tenantsData);
       setFilteredTenants(tenantsData);
 
-      const roomsResponse = await axios.get('http://localhost:5000/api/rooms', {
+      const roomsResponse = await axios.get('https://nhatro-backend.onrender.com/api/rooms', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const roomsData = roomsResponse.data;
@@ -115,7 +115,7 @@ const Tenants = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:5000/api/tenants/${editTenant._id}`,
+        `https://nhatro-backend.onrender.com/api/tenants/${editTenant._id}`,
         {
           name: editTenant.name,
           citizenId: editTenant.citizenId,
@@ -143,7 +143,7 @@ const Tenants = () => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa người thuê ${tenant.name} với CCCD ${tenant.citizenId}?`)) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.delete(`http://localhost:5000/api/tenants/citizen/${tenant.citizenId}`, {
+      const response = await axios.delete(`https://nhatro-backend.onrender.com/api/tenants/citizen/${tenant.citizenId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log('Response:', response.data);

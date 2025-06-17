@@ -23,7 +23,7 @@ const AlertUnpaid = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/rooms");
+        const response = await axios.get("https://nhatro-backend.onrender.com/api/rooms");
         setRooms(response.data);
       } catch (err) {
         alert("Lỗi khi lấy dữ liệu phòng!");
@@ -88,7 +88,7 @@ const AlertUnpaid = () => {
       <div className="flex items-center gap-2 mb-4">
         <ExclamationTriangleIcon className="h-7 w-7 text-red-500" />
         <h2 className="text-2xl font-bold text-red-600">
-          Cảnh báo: Phòng chưa thanh toán sau ngày 26
+          Cảnh báo: Phòng chưa thanh toán sau ngày 30
         </h2>
       </div>
       {unpaidRooms.length === 0 ? (

@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const { data } = await axios.get<Room[]>('http://localhost:5000/api/rooms');
+        const { data } = await axios.get<Room[]>('https://nhatro-backend.onrender.com/api/rooms');
         setRooms(data);
       } catch (err) {
         alert('Lỗi khi tải dữ liệu phòng!');
