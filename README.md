@@ -18,7 +18,7 @@ Key Features
  - Dashboard: Provides an overview with metrics on rooms, tenants, and revenue through pie and bar charts.
  - Real-Time Updates: Sync room status or sensor data via Firestore.
 
-Link demo: https://6850bec17270c4747670c01f--voluble-tulumba-e2c692.netlify.app/login
+Link demo: https://voluble-tulumba-e2c692.netlify.app/
 
 user: admin
 
