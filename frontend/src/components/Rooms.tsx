@@ -1,7 +1,4 @@
-diff --git a/frontend/src/components/Rooms.tsx b/frontend/src/components/Rooms.tsx
-index 316bea858bc78cedc16c6ba1f555feb6369d947f..1836eb2c4dca1c5c2c5724872fd556652f28dbd4 100644
---- a/frontend/src/components/Rooms.tsx
-+++ b/frontend/src/components/Rooms.tsx
+
 @@ -44,54 +44,51 @@ const Rooms = () => {
      bathrooms: 1,
      showerRooms: 1,
