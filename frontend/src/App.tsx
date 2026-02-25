@@ -13,7 +13,7 @@ import logo from './UTE.jpg'; // Thêm dòng này ở đầu file
 const Logout = () => {
   const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.removeItem('token');
+   localStorage.removeItem('isLoggedIn');
     navigate('/login');
   };
   return (
