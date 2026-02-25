@@ -1,5 +1,10 @@
 
-@@ -22,61 +22,56 @@ interface Tenant {
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { motion } from 'framer-motion';
+import { UserIcon, XMarkIcon, TrashIcon, PencilIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+
+interface Tenant {
  const isAxiosError = (error: unknown): error is { response?: { data?: { message?: string } } } => {
    return typeof error === 'object' && error !== null && 'response' in error;
  };
