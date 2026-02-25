@@ -1,5 +1,10 @@
 
-@@ -44,54 +44,51 @@ const Rooms = () => {
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { motion } from 'framer-motion';
+import { UserIcon, XMarkIcon, TrashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline';
+
+const Rooms = () => {
      bathrooms: 1,
      showerRooms: 1,
    });
