@@ -1,7 +1,4 @@
-diff --git a/frontend/src/components/Tenants.tsx b/frontend/src/components/Tenants.tsx
-index 8b9c4388583898d0c89628a5e44b80008637d29d..997a1f008bc28224cfd6d840a4c100301a74ed71 100644
---- a/frontend/src/components/Tenants.tsx
-+++ b/frontend/src/components/Tenants.tsx
+
 @@ -22,61 +22,56 @@ interface Tenant {
  const isAxiosError = (error: unknown): error is { response?: { data?: { message?: string } } } => {
    return typeof error === 'object' && error !== null && 'response' in error;
