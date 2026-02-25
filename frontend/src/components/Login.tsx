@@ -15,11 +15,11 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://nhatro-backend.onrender.com/api/auth/login', {
+      await axios.post('https://nhatro-backend.onrender.com/api/auth/login', {
         username,
         password,
       });
-      localStorage.setItem('token', response.data.token);
+     localStorage.setItem('isLoggedIn', 'true');
       navigate('/');
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>;
