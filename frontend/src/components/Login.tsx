@@ -53,7 +53,7 @@ const Login = () => {
           />
         </div>
         <button type="submit" className="w-full bg-dark-blue text-white p-2 rounded hover:bg-green-success">
-          Đăng nhập (admin : password)
+          Đăng nhập 
         </button>
       </form>
     </div>
