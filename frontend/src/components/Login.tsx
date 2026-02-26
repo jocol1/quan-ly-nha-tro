@@ -13,7 +13,7 @@ const Login = () => {
     localStorage.setItem('isLoggedIn', 'true');
     
     // Bạn có thể đổi '/' thành '/dashboard' nếu route của bạn là dashboard
-    navigate('/'); 
+    navigate('/Dashboard'); 
   };
 
   return (
