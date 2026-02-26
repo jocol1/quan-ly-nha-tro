@@ -1,31 +1,19 @@
 import { useState } from 'react';
-import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-// Định nghĩa kiểu cho response error từ API
-interface ErrorResponse {
-  message: string;
-}
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await axios.post('https://nhatro-backend.onrender.com/api/auth/login', {
-        username,
-        password,
-      });
-     localStorage.setItem('isLoggedIn', 'true');
-      navigate('/');
-    } catch (err) {
-      const error = err as AxiosError<ErrorResponse>;
-      const errorMessage = error.response?.data?.message || 'Lỗi không xác định';
-      alert('Đăng nhập thất bại: ' + errorMessage);
-    }
+    
+    // Bỏ qua gọi API, set thẳng trạng thái và chuyển trang
+    localStorage.setItem('isLoggedIn', 'true');
+    
+    // Bạn có thể đổi '/' thành '/dashboard' nếu route của bạn là dashboard
+    navigate('/'); 
   };
 
   return (
@@ -39,6 +27,7 @@ const Login = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full p-2 border rounded"
+            placeholder="Nhập bất kỳ..."
             required
           />
         </div>
@@ -49,11 +38,12 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
+            placeholder="Nhập bất kỳ..."
             required
           />
         </div>
-        <button type="submit" className="w-full bg-dark-blue text-white p-2 rounded hover:bg-green-success">
-          Đăng nhập 
+        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">
+          Đăng nhập (Vào thẳng Dashboard)
         </button>
       </form>
     </div>
